@@ -23,7 +23,7 @@ $intervalSeconds = 60
 # Fichier de log externe au dépôt pour éviter les boucles de commit
 $logFile = Join-Path $env:TEMP "gaushorn_auto_push.log"
 
-# Fonction utilitaire pour écrire un message dans la console et dans le fichier log, super interessant ce truc 
+# Fonction utilitaire pour écrire un message dans la console et dans le fichier log, super interessant ce truc , salöut moi ca va 
 function Write-Log {
     param([string]$Message)
 
