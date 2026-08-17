@@ -1,6 +1,6 @@
-# Gaushorn — Classification tir réel vs événement parasite
+# 🎯 Gaushorn — Classification tir réel vs événement parasite
 
-## Objectif
+## 📌 Objectif
 
 À partir des données brutes fournies par la team sensor (capteur de choc/vibration
 sur cible), construire un modèle de classification binaire capable de dire, pour
@@ -14,7 +14,7 @@ chaque déclenchement du capteur :
 Objectif final : un modèle déployable sur Raspberry Pi pour filtrer les fausses
 alertes en temps réel.
 
-## Arborescence
+## 📂 Arborescence
 
 ```
 gaushorn_shot_classifier/
@@ -29,7 +29,7 @@ gaushorn_shot_classifier/
 └── docs/             # présentation du projet
 ```
 
-## Données
+## 💾 Données
 
 74 événements capturés (74 fichiers .txt), chacun = une forme d'onde de 512
 échantillons (octets 0x00-0xFF, capteur centré ~128). Organisés en 13 séances de
@@ -39,7 +39,7 @@ tir (armes P8/G36, distances 10-250m, matériaux Holz/Kunststoff/PE) + 3 fichier
 > Note : la team a mentionné « 500 informations » — il s'agit des ~512
 > échantillons par capture, pas du nombre d'événements (qui est 74).
 
-## Pipeline (`src/`)
+## 🔧 Pipeline (`src/`)
 
 | Script | Rôle |
 |---|---|
@@ -53,7 +53,7 @@ tir (armes P8/G36, distances 10-250m, matériaux Holz/Kunststoff/PE) + 3 fichier
 | `08_feature_selection_hyperparam_tuning.py` | Réduction de features (20→7) + tuning C/gamma du SVM |
 | `09_train_final_model_export.py` | Entraîne le modèle final sur toutes les données et l'exporte |
 
-## Méthodologie de validation
+## ✅ Méthodologie de validation
 
 **Leave-One-Group-Out Cross-Validation (LOGO-CV)**, groupes = séance de tir
 (`shot_id`). Chaque tir génère jusqu'à 6 fichiers très corrélés (3 capteurs ×
@@ -62,7 +62,7 @@ ces fichiers entre train/test et donnerait des scores artificiellement optimiste
 Le LOGO-CV garantit qu'un tir entier est toujours testé sur un modèle qui ne l'a
 jamais vu.
 
-## Résultat final
+## 🏆 Résultat final
 
 Modèle retenu : **SVM (noyau RBF, C=0.1, gamma=scale)** sur 7 features
 sélectionnées (`peak_abs_amplitude`, `energy_centered`, `rms_centered`,
@@ -71,7 +71,7 @@ sélectionnées (`peak_abs_amplitude`, `energy_centered`, `rms_centered`,
 
 En LOGO-CV : accuracy 0.92, balanced accuracy 0.76, F1 (classe parasite) 0.63.
 
-## Limite principale : Steinschlag
+## ⚠️ Limite principale : Steinschlag
 
 Les impacts de pierre (Steinschlag) ont une signature énergétique quasi
 identique à un vrai tir (même amplitude, même contenu spectral) — **aucun des
@@ -81,7 +81,7 @@ balanced accuracy et 80% de recall sur les parasites restants (Vorbei +
 Auffahren) : la limite vient des données (4 exemples, physiquement proches
 d'un vrai tir), pas du modèle. Voir `docs/` pour le détail.
 
-## Déploiement Raspberry Pi
+## 🚀 Déploiement Raspberry Pi
 
 Voir `deployment/rpi_inference.py` — script autonome (numpy + scikit-learn +
 joblib) qui recalcule les 7 features à partir d'une forme d'onde brute et
