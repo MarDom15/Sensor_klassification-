@@ -88,3 +88,26 @@ joblib) qui recalcule les 7 features à partir d'une forme d'onde brute et
 charge `models/shot_vs_parasite_svm.joblib`. Installation rapide sur
 Raspberry Pi OS via les wheels précompilés [piwheels](https://www.piwheels.org/project/scikit-learn/)
 (pas de compilation depuis les sources).
+
+## 🔄 Auto-push GitHub
+
+Le projet contient un script de surveillance automatique :
+`programme/auto-push-minute.ps1`.
+
+Il ne fait pas de magie sans intervention :
+
+- il faut d'abord sauvegarder les fichiers dans VS Code (`Ctrl+S`),
+- la surveillance vérifie ensuite le dépôt toutes les 60 secondes,
+- si un changement est détecté, il exécute automatiquement :
+  - `git add -A`
+  - `git commit -m "Auto-commit..."`
+  - `git push`
+- ensuite le projet est synchronisé sur GitHub.
+
+En résumé :
+- tu travailles normalement,
+- tu sauvegardes le fichier,
+- puis le script s'occupe du push automatique.
+
+Il ne faut pas le relancer à chaque minute ; il faut le lancer une seule fois, puis
+il reste actif tant que le terminal reste ouvert.
