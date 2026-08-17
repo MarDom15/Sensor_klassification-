@@ -9,19 +9,16 @@ import streamlit as st
 from app.predict import predict_signal_array
 from app.preprocess import infer_context_from_path, read_waveform_from_text
 
-st.set_page_config(page_title="Gaushorn Shot Classifier", page_icon="🚨", layout="wide")
+st.set_page_config(page_title="Gaushorn Shot Classifier", page_icon=":material/analytics:", layout="wide")
 
-st.title("🚨 Gaushorn Shot Classifier")
-st.caption("Classification d'un signal brut : tir réel vs parasite")
+st.title("Gaushorn Shot Classifier")
+st.caption("Classification du signal brut : tir réel vs parasite")
+
+st.badge("Live analysis", icon=":material/check_circle:", color="green")
 
 with st.sidebar:
     st.header("Contexte de tir")
-    st.markdown(
-        """
-        Saisissez les paramètres métier du tir pour améliorer le contexte d’analyse.
-        Les champs sont exportés avec le résultat pour la traçabilité.
-        """
-    )
+    st.caption("Saisissez les paramètres métier pour compléter le contexte d’analyse.")
 
     default_context = {"weapon": "P8", "distance_m": 10, "material": "Holz", "sensor_position": "mitte"}
     detected = {}
@@ -33,13 +30,12 @@ with st.sidebar:
 
     weapon = st.selectbox("Arme", options=["P8", "G36", "Inconnue"], index=["P8", "G36", "Inconnue"].index(default_context.get("weapon", "Inconnue")))
     distance = st.number_input("Distance (m)", min_value=0, max_value=500, value=int(default_context.get("distance_m") or 10), step=1)
-    material = st.selectbox("Matériau / type de cible", options=["Holz", "Kunststoff", "PE", "Inconnu"], index=["Holz", "Kunststoff", "PE", "Inconnu"].index(default_context.get("material", "Inconnu")))
+    material = st.selectbox("Matériau / cible", options=["Holz", "Kunststoff", "PE", "Inconnu"], index=["Holz", "Kunststoff", "PE", "Inconnu"].index(default_context.get("material", "Inconnu")))
     sensor_position = st.selectbox("Position du capteur", options=["oben", "mitte", "unten", "Inconnue"], index=["oben", "mitte", "unten", "Inconnue"].index(default_context.get("sensor_position", "Inconnue")))
     temperature = st.number_input("Température (°C)", min_value=-40.0, max_value=80.0, value=20.0, step=0.5)
     shot_date = st.date_input("Date", value=date.today())
     shot_time = st.time_input("Heure", value=datetime.now().time())
 
-    st.markdown("---")
     st.caption("Le contexte métier est ajouté au JSON de sortie pour archivage et audit.")
 
 if uploaded_file is not None:
@@ -64,35 +60,41 @@ if uploaded_file is not None:
     }
     result = predict_signal_array(signal)
 
-    st.subheader("Contexte de tir")
-    meta_cols = st.columns(5)
-    meta_cols[0].metric("Arme", context["weapon"])
-    meta_cols[1].metric("Distance", f"{context['distance_m']} m")
-    meta_cols[2].metric("Matériau", context["material"])
-    meta_cols[3].metric("Position", context["sensor_position"])
-    meta_cols[4].metric("Température", f"{context['temperature_c']} °C")
+    with st.container(border=True):
+        st.subheader("Contexte de tir")
+        meta_cols = st.columns(5)
+        meta_cols[0].metric("Arme", context["weapon"])
+        meta_cols[1].metric("Distance", f"{context['distance_m']} m")
+        meta_cols[2].metric("Matériau", context["material"])
+        meta_cols[3].metric("Position", context["sensor_position"])
+        meta_cols[4].metric("Température", f"{context['temperature_c']} °C")
+        st.caption(f"Date: {context['date']} | Heure: {context['time']}")
 
-    st.info(f"Date: {context['date']} | Heure: {context['time']}")
+    st.write("")
 
-    st.subheader("Signal brut")
-    df_signal = pd.DataFrame({"Index": np.arange(len(signal)), "ADC": signal})
-    st.line_chart(df_signal.set_index("Index"))
+    with st.container(border=True):
+        st.subheader("Signal brut")
+        df_signal = pd.DataFrame({"Index": np.arange(len(signal)), "ADC": signal})
+        st.line_chart(df_signal.set_index("Index"), height=280)
 
-    st.subheader("Résultat")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Prédiction", result["label"])
-    col2.metric("Confiance", f"{result['confidence'] * 100:.1f}%")
-    col3.metric("Probabilité parasite", f"{result['probabilities']['Parasite'] * 100:.1f}%")
+    st.write("")
 
-    st.write("Probabilités détaillées :")
-    st.json(result["probabilities"])
+    with st.container(border=True):
+        st.subheader("Résultat")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Prédiction", result["label"])
+        col2.metric("Confiance", f"{result['confidence'] * 100:.1f}%")
+        col3.metric("Probabilité parasite", f"{result['probabilities']['Parasite'] * 100:.1f}%")
 
-    st.download_button(
-        label="Télécharger les résultats JSON",
-        data=str({**result, "context": context}).replace("'", '"'),
-        file_name="prediction_result.json",
-        mime="application/json",
-    )
+        st.write("Probabilités détaillées :")
+        st.json(result["probabilities"])
+
+        st.download_button(
+            label="Télécharger les résultats JSON",
+            data=str({**result, "context": context}).replace("'", '"'),
+            file_name="prediction_result.json",
+            mime="application/json",
+        )
 else:
     st.info("Téléversez un fichier texte brut pour lancer la classification.")
 
