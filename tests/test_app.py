@@ -1,7 +1,7 @@
 import numpy as np
 
 from app.predict import predict_signal_array
-from app.preprocess import FEATURE_COLUMNS, extract_features
+from app.preprocess import FEATURE_COLUMNS, extract_features, infer_context_from_path
 
 
 def _make_example_signal() -> np.ndarray:
@@ -26,3 +26,15 @@ def test_prediction_returns_valid_class():
     assert result["prediction"] in (0, 1)
     assert result["label"] in {"Parasite", "Treffer"}
     assert 0.0 <= result["confidence"] <= 1.0
+
+
+def test_infer_context_from_path_extracts_metadata():
+    context = infer_context_from_path(
+        "data/raw/190925 gaushorn/003_P8 20m Holz eigene/mitte1.txt"
+    )
+
+    assert context["weapon"] == "P8"
+    assert context["distance_m"] == 20
+    assert context["material"] == "Holz"
+    assert context["sensor_position"] == "mitte"
+    assert context["source_folder"] == "003_P8 20m Holz eigene"

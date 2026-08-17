@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Dict, Iterable, List
 
@@ -47,6 +48,47 @@ def read_waveform_from_file(path: str | Path) -> np.ndarray:
     """Charge un signal brut depuis un fichier texte."""
     file_path = Path(path)
     return read_waveform_from_text(file_path.read_text(encoding="utf-8", errors="replace"))
+
+
+def infer_context_from_path(path: str | Path) -> Dict[str, object]:
+    """Extrait les métadonnées métier depuis le chemin d'un fichier brut."""
+    file_path = Path(path)
+    folder_name = file_path.parent.name
+    filename = file_path.name
+
+    weapon = None
+    for token in re.split(r"[\s_]+", folder_name):
+        candidate = token.upper()
+        if candidate in {"P8", "G36"}:
+            weapon = candidate
+            break
+
+    distance_match = re.search(r"(\d+)\s*m\b", folder_name, flags=re.IGNORECASE)
+    distance_m = int(distance_match.group(1)) if distance_match else None
+
+    material = None
+    if re.search(r"holz", folder_name, flags=re.IGNORECASE):
+        material = "Holz"
+    elif re.search(r"kunststoff", folder_name, flags=re.IGNORECASE):
+        material = "Kunststoff"
+    elif re.search(r"\bPE\b", folder_name, flags=re.IGNORECASE):
+        material = "PE"
+
+    position = None
+    match = re.match(r"(oben|mitte|unten)(\d+)?", filename.replace(".txt", ""), flags=re.IGNORECASE)
+    if match:
+        position = match.group(1).lower()
+
+    source_folder = folder_name
+
+    return {
+        "weapon": weapon,
+        "distance_m": distance_m,
+        "material": material,
+        "sensor_position": position,
+        "source_folder": source_folder,
+        "filename": filename,
+    }
 
 
 def extract_features(signal: Iterable[float]) -> Dict[str, float]:

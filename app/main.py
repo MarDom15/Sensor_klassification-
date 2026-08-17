@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from app.predict import predict_signal_array
-from app.preprocess import read_waveform_from_text
+from app.preprocess import infer_context_from_path, read_waveform_from_text
 
 st.set_page_config(page_title="Gaushorn Shot Classifier", page_icon="🚨", layout="wide")
 
@@ -19,7 +19,9 @@ with st.sidebar:
     st.markdown(
         """
         Cette application charge un signal brut issu du capteur,
-        calcule les features du modèle et retourne la prédiction.
+        calcule les features du modèle et retourne une prédiction.
+        Elle affiche aussi le contexte métier détecté à partir du fichier:
+        distance, matériau, arme et position du capteur.
         """
     )
 
@@ -34,7 +36,15 @@ if uploaded_file is not None:
         st.error(f"Impossible d'interpréter le fichier : {exc}")
         st.stop()
 
+    context = infer_context_from_path(uploaded_file.name)
     result = predict_signal_array(signal)
+
+    st.subheader("Contexte détecté")
+    meta_cols = st.columns(4)
+    meta_cols[0].metric("Arme", context.get("weapon") or "Inconnue")
+    meta_cols[1].metric("Distance", f"{context.get('distance_m')} m" if context.get("distance_m") is not None else "Inconnue")
+    meta_cols[2].metric("Matériau", context.get("material") or "Inconnu")
+    meta_cols[3].metric("Position", context.get("sensor_position") or "Inconnue")
 
     st.subheader("Signal brut")
     df_signal = pd.DataFrame({"Index": np.arange(len(signal)), "ADC": signal})
@@ -51,7 +61,7 @@ if uploaded_file is not None:
 
     st.download_button(
         label="Télécharger les résultats JSON",
-        data=str(result).replace("'", '"'),
+        data=str({**result, "context": context}).replace("'", '"'),
         file_name="prediction_result.json",
         mime="application/json",
     )
