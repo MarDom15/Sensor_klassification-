@@ -1,0 +1,5 @@
+outcome,n,LogisticRegression,KNN(k=5),SVM(RBF),DecisionTree,RandomForest,GradientBoosting
+Treffer,65,0.723,1.0,0.969,0.815,1.0,0.892
+Vorbei,2,0.0,0.0,1.0,0.0,0.0,0.0
+Steinschlag,4,0.0,0.0,0.0,0.0,0.0,0.0
+Auffahren,3,1.0,0.0,0.667,0.667,0.333,0.667

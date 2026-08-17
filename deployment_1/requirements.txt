@@ -1,0 +1,12 @@
+numpy
+scikit-learn
+joblib
+
+# Nur noetig, wenn die LOGO! 8 per Modbus TCP angebunden wird
+# (siehe logo8_modbus_bridge.py):
+pymodbus
+
+# Auf Raspberry Pi OS installieren sich diese Pakete ueber die
+# vorkompilierten piwheels-Pakete (standardmaessig eingerichtet in
+# /etc/pip.conf):
+#   pip install -r requirements.txt

@@ -1,0 +1,15 @@
+[Unit]
+Description=Gaushorn Sensor-Klassifikation (Treffer vs. Stoersignal)
+After=network.target
+
+[Service]
+Type=simple
+# Pfad anpassen, falls das Projekt woanders liegt:
+WorkingDirectory=/home/pi/gaushorn_shot_classifier/deployment
+ExecStart=/home/pi/gaushorn_shot_classifier/deployment/venv/bin/python3 rpi_inference.py --live
+Restart=on-failure
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target

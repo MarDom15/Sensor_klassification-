@@ -1,0 +1,8 @@
+numpy
+scikit-learn
+joblib
+
+# Auf Raspberry Pi OS installieren sich diese Pakete ueber die
+# vorkompilierten piwheels-Pakete (standardmaessig eingerichtet in
+# /etc/pip.conf):
+#   pip install -r requirements.txt
