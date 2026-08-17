@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from datetime import date, datetime, time
 
 import numpy as np
 import pandas as pd
@@ -15,17 +15,32 @@ st.title("🚨 Gaushorn Shot Classifier")
 st.caption("Classification d'un signal brut : tir réel vs parasite")
 
 with st.sidebar:
-    st.header("Informations")
+    st.header("Contexte de tir")
     st.markdown(
         """
-        Cette application charge un signal brut issu du capteur,
-        calcule les features du modèle et retourne une prédiction.
-        Elle affiche aussi le contexte métier détecté à partir du fichier:
-        distance, matériau, arme et position du capteur.
+        Saisissez les paramètres métier du tir pour améliorer le contexte d’analyse.
+        Les champs sont exportés avec le résultat pour la traçabilité.
         """
     )
 
-uploaded_file = st.file_uploader("Téléverser un fichier texte brut", type=["txt", "csv"])
+    default_context = {"weapon": "P8", "distance_m": 10, "material": "Holz", "sensor_position": "mitte"}
+    detected = {}
+
+    uploaded_file = st.file_uploader("Téléverser un fichier texte brut", type=["txt", "csv"])
+    if uploaded_file is not None:
+        detected = infer_context_from_path(uploaded_file.name)
+        default_context = {**default_context, **{key: value for key, value in detected.items() if value is not None}}
+
+    weapon = st.selectbox("Arme", options=["P8", "G36", "Inconnue"], index=["P8", "G36", "Inconnue"].index(default_context.get("weapon", "Inconnue")))
+    distance = st.number_input("Distance (m)", min_value=0, max_value=500, value=int(default_context.get("distance_m") or 10), step=1)
+    material = st.selectbox("Matériau / type de cible", options=["Holz", "Kunststoff", "PE", "Inconnu"], index=["Holz", "Kunststoff", "PE", "Inconnu"].index(default_context.get("material", "Inconnu")))
+    sensor_position = st.selectbox("Position du capteur", options=["oben", "mitte", "unten", "Inconnue"], index=["oben", "mitte", "unten", "Inconnue"].index(default_context.get("sensor_position", "Inconnue")))
+    temperature = st.number_input("Température (°C)", min_value=-40.0, max_value=80.0, value=20.0, step=0.5)
+    shot_date = st.date_input("Date", value=date.today())
+    shot_time = st.time_input("Heure", value=datetime.now().time())
+
+    st.markdown("---")
+    st.caption("Le contexte métier est ajouté au JSON de sortie pour archivage et audit.")
 
 if uploaded_file is not None:
     text = uploaded_file.read().decode("utf-8", errors="replace")
@@ -36,15 +51,28 @@ if uploaded_file is not None:
         st.error(f"Impossible d'interpréter le fichier : {exc}")
         st.stop()
 
-    context = infer_context_from_path(uploaded_file.name)
+    context = {
+        "weapon": weapon,
+        "distance_m": int(distance),
+        "material": material,
+        "sensor_position": sensor_position,
+        "temperature_c": float(temperature),
+        "date": shot_date.isoformat(),
+        "time": shot_time.strftime("%H:%M:%S"),
+        "source_folder": detected.get("source_folder") if "detected" in locals() else None,
+        "filename": uploaded_file.name,
+    }
     result = predict_signal_array(signal)
 
-    st.subheader("Contexte détecté")
-    meta_cols = st.columns(4)
-    meta_cols[0].metric("Arme", context.get("weapon") or "Inconnue")
-    meta_cols[1].metric("Distance", f"{context.get('distance_m')} m" if context.get("distance_m") is not None else "Inconnue")
-    meta_cols[2].metric("Matériau", context.get("material") or "Inconnu")
-    meta_cols[3].metric("Position", context.get("sensor_position") or "Inconnue")
+    st.subheader("Contexte de tir")
+    meta_cols = st.columns(5)
+    meta_cols[0].metric("Arme", context["weapon"])
+    meta_cols[1].metric("Distance", f"{context['distance_m']} m")
+    meta_cols[2].metric("Matériau", context["material"])
+    meta_cols[3].metric("Position", context["sensor_position"])
+    meta_cols[4].metric("Température", f"{context['temperature_c']} °C")
+
+    st.info(f"Date: {context['date']} | Heure: {context['time']}")
 
     st.subheader("Signal brut")
     df_signal = pd.DataFrame({"Index": np.arange(len(signal)), "ADC": signal})
