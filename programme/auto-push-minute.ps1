@@ -4,7 +4,7 @@
 $repoPath = "c:\Users\MarcialDomche\Desktop\Lundi_Reunion\Ki_Projekt\gaushorn_shot_classifier"
 $gitExe = "C:\Program Files\Git\bin\git.exe"
 $intervalSeconds = 60
-$logFile = Join-Path $repoPath "programme\auto-push.log"
+$logFile = Join-Path $env:TEMP "gaushorn_auto_push.log"
 
 function Write-Log {
     param([string]$Message)
